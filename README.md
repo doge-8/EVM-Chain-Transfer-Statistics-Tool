@@ -11,6 +11,7 @@ Export token transfer records for a specified wallet address on EVM chains (Poly
 - Group records by transaction hash, clearly showing fund flow / 按交易哈希整合记录，清晰展示资金流向
 - Automatic calculation of total inflow/outflow / 自动统计总流入/流出金额
 - Export to CSV format for Excel analysis / 导出为 CSV 格式，方便用 Excel 分析
+- Save raw API data to JSON for further analysis / 保存原始 API 数据到 JSON 文件便于进一步分析
 
 ## Prerequisites / 使用前准备
 
@@ -53,14 +54,17 @@ END_DATE = "2026-01-31"
 
 ### 3. View Results / 查看结果
 
-The program generates a CSV file with the following fields:
+The program generates two files / 程序会生成两个文件：
 
-程序会生成 CSV 文件，包含以下信息：
+#### CSV File (Processed Data / 整合后数据)
+
+File name / 文件名: `evm_transfers_{wallet}_{date}.csv`
 
 | Field / 字段 | Description / 说明 |
 |------|------|
 | Transaction Hash | Transaction hash / 交易哈希 |
 | Blockno | Block number / 区块号 |
+| UnixTimestamp | Unix timestamp / Unix 时间戳 |
 | DateTime (UTC) | UTC time / UTC 时间 |
 | Direction | Direction: IN / OUT / SWAP / 方向: 流入/流出/交换 |
 | In_TokenValue | Tokens received / 收到的代币数量 |
@@ -72,6 +76,39 @@ The program generates a CSV file with the following fields:
 The CSV ends with a summary / CSV 末尾会显示统计汇总：
 - Total IN: Total inflow by token / 各代币总流入
 - Total OUT: Total outflow by token / 各代币总流出
+
+#### JSON File (Raw API Data / 原始 API 数据)
+
+File name / 文件名: `evm_raw_data_{wallet}_{date}.json`
+
+Contains the raw data returned by Etherscan API / 包含 Etherscan API 返回的原始数据：
+
+| Field / 字段 | Description / 说明 |
+|------|------|
+| blockNumber | Block number / 区块号 |
+| timeStamp | Unix timestamp / Unix 时间戳 |
+| hash | Transaction hash / 交易哈希 |
+| nonce | Transaction nonce / 交易序号 |
+| blockHash | Block hash / 区块哈希 |
+| from | Sender address / 发送方地址 |
+| to | Receiver address / 接收方地址 |
+| contractAddress | Token contract address / 代币合约地址 |
+| value | Raw token amount (divide by 10^decimals) / 原始代币数量 (需除以 10^decimals) |
+| tokenName | Token full name / 代币全称 |
+| tokenSymbol | Token symbol / 代币符号 |
+| tokenDecimal | Token decimals / 代币精度 |
+| transactionIndex | Transaction index in block / 交易在区块中的索引 |
+| gas | Gas limit / Gas 限制 |
+| gasPrice | Gas price in wei / Gas 价格 (wei) |
+| gasUsed | Actual gas used / 实际使用的 Gas |
+| cumulativeGasUsed | Cumulative gas used / 累计 Gas 使用量 |
+| methodId | Method selector / 方法选择器 |
+| functionName | Called function name / 调用的函数名 |
+| confirmations | Number of confirmations / 确认数 |
+
+**Note / 注意**: The raw data only contains successful transactions. Failed transactions do not trigger ERC-20 Transfer events.
+
+原始数据只包含成功的交易，失败的交易不会触发 ERC-20 Transfer 事件，因此不会出现在结果中。
 
 ## Custom Tokens / 自定义代币
 
@@ -87,11 +124,27 @@ CONTRACTS = {
 }
 ```
 
+## Supported Chains / 支持的链
+
+Change `CHAIN_ID` in `config.py` to query other EVM chains:
+
+修改 `config.py` 中的 `CHAIN_ID` 可查询其他 EVM 链：
+
+| Chain / 链 | Chain ID |
+|------|----------|
+| Ethereum | 1 |
+| Polygon | 137 |
+| BSC | 56 |
+| Arbitrum | 42161 |
+| Optimism | 10 |
+| Base | 8453 |
+
 ## Notes / 注意事项
 
 - Date cannot exceed today / 日期不能超过当前日期
 - Free API has rate limits (5 calls/sec), the program handles this automatically / 免费 API 有速率限制，程序会自动处理
 - Large data exports may take a while, please be patient / 大量数据导出可能需要较长时间，请耐心等待
+- Only successful transactions are included / 只包含成功的交易
 
 ## File Structure / 文件说明
 
@@ -102,4 +155,11 @@ CONTRACTS = {
 ├── install.sh                # Environment setup script / 环境配置脚本
 ├── start.sh                  # Startup script / 启动脚本
 └── README.md                 # Documentation / 说明文档
+```
+
+## Output Files / 输出文件
+
+```
+├── evm_transfers_*.csv       # Processed transfer data / 整合后的转账数据
+└── evm_raw_data_*.json       # Raw API response data / 原始 API 响应数据
 ```
