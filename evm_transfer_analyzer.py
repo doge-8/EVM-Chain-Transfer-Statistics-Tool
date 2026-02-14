@@ -9,6 +9,7 @@ Polygon 链上数据导出工具
 import requests
 import csv
 import time
+import json
 from datetime import datetime
 
 # 从配置文件导入
@@ -155,7 +156,7 @@ def export_to_csv(transfers, wallet_address, start_date, end_date):
         return None
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"polygon_transfers_{wallet_address[:10]}_{start_date}_{end_date}_{timestamp}.csv"
+    filename = f"evm_transfers_{wallet_address[:10]}_{start_date}_{end_date}_{timestamp}.csv"
 
     # 按哈希分组整合
     grouped = group_transfers_by_hash(transfers, wallet_address)
@@ -343,6 +344,12 @@ def main():
     all_transfers.sort(key=lambda x: int(x.get("timeStamp", "0")))
 
     print(f"\n总共获取到 {len(all_transfers)} 条交易记录")
+
+    # 保存原始数据到 JSON 文件
+    raw_filename = f"evm_raw_data_{wallet_address[:10]}_{start_date_str}_{end_date_str}.json"
+    with open(raw_filename, 'w', encoding='utf-8') as f:
+        json.dump(all_transfers, f, indent=2, ensure_ascii=False)
+    print(f"原始数据已保存到: {raw_filename}")
 
     # 导出 CSV
     print("\n正在导出数据到 CSV...")
